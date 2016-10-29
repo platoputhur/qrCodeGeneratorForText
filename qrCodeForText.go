@@ -1,3 +1,17 @@
+/*Copyright (c) 2016 Plato Puthur. All rights reserved.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 package main
 
 import (
@@ -12,8 +26,18 @@ import (
 )
 
 func main() {
-	textToConvert := os.Args[1:]
-	qrcode, err := qr.Encode(textToConvert[0], qr.H, qr.Unicode)
+	var textToConvert string
+	if len(os.Args) <= 1 {
+		fmt.Println("You didn't give me an input, please enter the text you would like to convert to QR Code:")
+		_, err := fmt.Scanln(&textToConvert)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		textSlice := os.Args[1:]
+		textToConvert = textSlice[0]
+	}
+	qrcode, err := qr.Encode(textToConvert, qr.H, qr.Unicode)
 
 	f, _ := os.Create("qrcode.png")
 	fileName := f.Name()
