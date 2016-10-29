@@ -28,11 +28,8 @@ import (
 func main() {
 	var textToConvert string
 	if len(os.Args) <= 1 {
-		fmt.Println("You didn't give me an input, please enter the text you would like to convert to QR Code:")
-		_, err := fmt.Scanln(&textToConvert)
-		if err != nil {
-			log.Fatal(err)
-		}
+		textToConvert = askForInput()
+		fmt.Println(textToConvert)
 	} else {
 		textSlice := os.Args[1:]
 		textToConvert = textSlice[0]
@@ -66,6 +63,16 @@ func main() {
 	} else {
 		fmt.Println("Qr code not deleted, can be found in the working directory!")
 	}
+}
+
+func askForInput() string {
+	fmt.Println("You didn't give me an input, please enter the text you would like to convert to QR Code:")
+	var textToConvert string
+	_, err := fmt.Scanln(&textToConvert)
+	if err != nil {
+		textToConvert = askForInput()
+	}
+	return textToConvert
 }
 
 func askForConfirmation() bool {
