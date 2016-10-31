@@ -13,6 +13,7 @@ After giving the input it should ideally open the QR Code on your default image 
 
 ###Changelog###
 **0.2** Added cross platform supports
+
 **0.1** First release
 
 _Copyright (c) 2016 Plato Puthur. All rights reserved._
