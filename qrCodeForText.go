@@ -16,20 +16,24 @@ package main
 
 import (
 	"fmt"
+	"image"
+	"image/color"
+	"image/draw"
 	"image/png"
 	"log"
 	"os"
-	"os/exec"
 
 	"github.com/boombuler/barcode"
 	"github.com/boombuler/barcode/qr"
+	"github.com/google/gxui"
+	"github.com/google/gxui/drivers/gl"
+	"github.com/google/gxui/themes/dark"
 )
 
 func main() {
 	var textToConvert string
 	if len(os.Args) <= 1 {
 		textToConvert = askForInput()
-		fmt.Println(textToConvert)
 	} else {
 		textSlice := os.Args[1:]
 		textToConvert = textSlice[0]
@@ -43,18 +47,16 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		qrcode, err = barcode.Scale(qrcode, 100, 100)
+		qrcode, err = barcode.Scale(qrcode, 250, 250)
 		if err != nil {
 			fmt.Println(err)
 		} else {
 			png.Encode(f, qrcode)
 		}
 	}
-	cmd := exec.Command("xdg-open", fileName)
-	err = cmd.Run()
-	if err != nil {
-		fmt.Println(err)
-	}
+	var i imageViewerConfig
+	i.createImageFileWithBorder()
+	gl.StartDriver(i.createImageWindows)
 
 	fmt.Println("Delete the generated qr code?")
 	if askForConfirmation() == true {
@@ -104,4 +106,49 @@ func posString(slice []string, element string) int {
 		}
 	}
 	return -1
+}
+
+func (i *imageViewerConfig) createImageFileWithBorder() {
+	imageFile, err := os.Open("qrcode.png")
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	sourceImage, _, err := image.Decode(imageFile)
+	imageFile.Close()
+	i.m = image.NewRGBA(image.Rect(0, 0, sourceImage.Bounds().Dx()+6, sourceImage.Bounds().Dy()+6))
+	white := color.RGBA{255, 255, 255, 255}
+	draw.Draw(i.m, i.m.Bounds(), &image.Uniform{white}, image.ZP, draw.Src)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	imageFile, _ = os.Create("qrcode.png")
+	defer imageFile.Close()
+
+	qrSourceImage := sourceImage.Bounds()
+	draw.Draw(i.m, qrSourceImage.Add(image.Point{3, 3}), sourceImage, image.ZP, draw.Src)
+	png.Encode(imageFile, i.m)
+}
+
+func (i *imageViewerConfig) createImageWindows(driver gxui.Driver) {
+	width, height := 256, 256
+	theme := dark.CreateTheme(driver)
+	img := theme.CreateImage()
+	window := theme.CreateWindow(width, height, "QrCode viewer")
+	texture := driver.CreateTexture(i.m, 1.0)
+	img.SetTexture(texture)
+	window.AddChild(img)
+	window.OnClose(driver.Terminate)
+}
+
+type imageViwer interface {
+	createImageWindows()
+	createImageFileWithBorder()
+}
+
+type imageViewerConfig struct {
+	m           *image.RGBA
+	sourceImage *image.RGBA
 }
